@@ -1,3 +1,34 @@
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@Spidey975 
+Spidey975
+/
+theory-sdk
+Public
+forked from conicgames/theory-sdk
+Code
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+theory-sdk/samples/T4-Polynomials.js /
+@Spidey975
+Spidey975 Update T4-Polynomials.js
+…
+Latest commit f35a2ed 1 minute ago
+ History
+ 2 contributors
+@conicgames@Spidey975
+246 lines (205 sloc)  8.92 KB
+
 import { ExponentialCost, FirstFreeCost } from "../api/Costs";
 import { Localization } from "../api/Localization";
 import { parseBigNumber, BigNumber } from "../api/BigNumber";
@@ -5,14 +36,14 @@ import { theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
 var id = "polynomials"
-var name = "Polynomials";
-var description = "An implementation of the 'Polynomials' theory from the game.";
-var authors = "Gilles-Philippe Paillé";
+var name = "Polynomials 2_2";
+var description = "An improv of the 'Polynomials' theory from the game.";
+var authors = "Spideybot975";
 var version = 1;
 
 var q = BigNumber.ZERO;
 var q1, q2;
-var c1, c2, c3, c4, c5, c6;
+var c1, c2, c3, c4, c5, c6, c7;
 var terms, c1Exp, multQDot;
 
 var init = () => {
@@ -75,6 +106,18 @@ var init = () => {
         c6.getDescription = (amount) => Utils.getMath(getDesc(c6.level));
         c6.getInfo = (amount) => Utils.getMathTo(getInfo(c6.level), getInfo(c6.level + amount));
         c6.isAvailable = false;
+        
+    }
+    
+    // c7
+    {
+        let getDesc = (level) => "c_7=10^{" + level + "}";
+        let getInfo = (level) => "c_7=" + getC7(level).toString(0);
+        c7 = theory.createUpgrade(5, currency, new ExponentialCost(1e10, Math.log2(60)));
+        c7.getDescription = (amount) => Utils.getMath(getDesc(c7.level));
+        c7.getInfo = (amount) => Utils.getMathTo(getInfo(c7.level), getInfo(c7.level + amount));
+        c7.isAvailable = false;
+        
     }
 
     // q1
@@ -97,18 +140,18 @@ var init = () => {
 
     /////////////////////
     // Permanent Upgrades
-    theory.createPublicationUpgrade(0, currency, 1e9);
-    theory.createBuyAllUpgrade(1, currency, 1e13);
-    theory.createAutoBuyerUpgrade(2, currency, 1e30);
+    theory.createPublicationUpgrade(0, currency, 1e3);
+    theory.createBuyAllUpgrade(1, currency, 1e4.3);
+    theory.createAutoBuyerUpgrade(2, currency, 1e10);
 
     /////////////////////
     // Checkpoint Upgrades
     theory.setMilestoneCost(new LinearCost(25, 25));
 
     {
-        terms = theory.createMilestoneUpgrade(0, 3);
-        terms.getDescription = (_) => Localization.getUpgradeAddTermDesc(terms.level == 0 ? "q^2" : terms.level == 1 ? "q^3" : "q^4");
-        terms.getInfo = (_) => Localization.getUpgradeAddTermInfo(terms.level == 0 ? "q^2" : terms.level == 1 ? "q^3" : "q^4");
+        terms = theory.createMilestoneUpgrade(0, 4);
+        terms.getDescription = (_) => Localization.getUpgradeAddTermDesc(terms.level == 0 ? "q^2" : terms.level == 1 ? "q^3" : "q^4" : "q^5");
+        terms.getInfo = (_) => Localization.getUpgradeAddTermInfo(terms.level == 0 ? "q^2" : terms.level == 1 ? "q^3" : "q^4" : "q^5");
         terms.boughtOrRefunded = (_) => { theory.invalidatePrimaryEquation(); updateAvailability(); }
     }
 
@@ -133,6 +176,7 @@ var updateAvailability = () => {
     c4.isAvailable = terms.level > 0;
     c5.isAvailable = terms.level > 1;
     c6.isAvailable = terms.level > 2;
+    c7.isAvailable = terms.level > 3;
 }
 
 var tick = (elapsedTime, multiplier) => {
@@ -146,6 +190,7 @@ var tick = (elapsedTime, multiplier) => {
     let vc4 = getC4(c4.level);
     let vc5 = getC5(c5.level);
     let vc6 = getC6(c6.level);
+    let vc7 = getC6(c7.level);
     let q1q2 = vq1 * vq2;
 
     let p = (q + BigNumber.ONE).Square() - BigNumber.ONE;
@@ -153,15 +198,17 @@ var tick = (elapsedTime, multiplier) => {
     let qe2 = q * q;
     let qe3 = qe2 * q;
     let qe4 = qe3 * q;
+    let qe5 = qe4 * q;
 
     let term1 = vc1.pow(vc1Exp) * vc2;
     let term2 = vc3 * q;
     let term3 = terms.level > 0 ? vc4 * qe2 : BigNumber.ZERO;
     let term4 = terms.level > 1 ? vc5 * qe3 : BigNumber.ZERO;
     let term5 = terms.level > 2 ? vc6 * qe4 : BigNumber.ZERO;
+    let term6 = terms.level > 3 ? vc7 * qe5 : BigNumber.ZERO;
     let bonus = theory.publicationMultiplier;
 
-    currency.value += bonus * dt * (term1 + term2 + term3 + term4 + term5);
+    currency.value += bonus * dt * (term1 + term2 + term3 + term4 + term5 + term6);
 
     theory.invalidateTertiaryEquation();
 }
@@ -187,6 +234,7 @@ var getPrimaryEquation = () => {
     if (terms.level > 0) result += "+c_4q^2";
     if (terms.level > 1) result += "+c_5q^3";
     if (terms.level > 2) result += "+c_6q^4";
+    if (terms.level > 3) result += "+c_7q^5";
 
     return result;
 }
@@ -210,17 +258,18 @@ var getSecondaryEquation = () => {
 
 var getTertiaryEquation = () => "q=" + q.toString();
 
-var getPublicationMultiplier = (tau) => tau.pow(0.165) / BigNumber.FOUR;
-var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.165}}{4}";
+var getPublicationMultiplier = (tau) => tau.pow(0.17) / BigNumber.FOUR;
+var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.17}}{4}";
 var getTau = () => currency.value;
 var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.value.abs()).log10().toNumber();
 
-var getC1 = (level) => Utils.getStepwisePowerSum(level, 2, 10, 0);
+var getC1 = (level) => Utils.getStepwisePowerSum(level, 2, 12, 0);
 var getC2 = (level) => BigNumber.TWO.pow(level);
 var getC3 = (level) => BigNumber.TWO.pow(level);
 var getC4 = (level) => BigNumber.THREE.pow(level);
 var getC5 = (level) => BigNumber.FIVE.pow(level);
 var getC6 = (level) => BigNumber.TEN.pow(level);
+var getC7 = (level) => BigNumber.TEN.pow(level);
 var getQ1 = (level) => Utils.getStepwisePowerSum(level, 2, 10, 0);
 var getQ2 = (level) => BigNumber.TWO.pow(level);
 var getC1Exp = (level) => BigNumber.from(1 + level * 0.15);
